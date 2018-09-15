@@ -1,7 +1,5 @@
 
 Entities = require('html-entities').AllHtmlEntities
-Handlebars = require 'handlebars'
-helpers = require('handlebars-helpers')(handlebars: Handlebars)
 express = require 'express'
 bodyParser = require 'body-parser'
 fs = require 'fs'
