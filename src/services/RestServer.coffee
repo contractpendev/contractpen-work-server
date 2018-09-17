@@ -11,8 +11,8 @@ class RestServer
   sendAvailableCommandToClient: (socket) =>
     pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
     if pending
-      console.log 'send this pending job to client'
       await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
+      console.log 'send this pending job to client'
       socket.send 'executeJob', pending
     console.log 'ok'
 
@@ -20,7 +20,7 @@ class RestServer
     @wss.on 'connection', (socket) =>
       console.log 'Socket is connected'
       socket.send('serverConnected', 'The server is connected')
-      socket.on 'clientReadyToAcceptCommands', (message) ->
+      socket.on 'clientReadyToAcceptCommands', (message) =>
         console.log 'clientReadyToAcceptCommands received from the client means that we can send a command to this client'
         console.log(message)
         this.sendAvailableCommandToClient socket
