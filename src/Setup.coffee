@@ -49,6 +49,7 @@ Worker = ->
     expressRouter: Awilix.asValue router
     redisClient: Awilix.asValue redisClient
     asyncRedisClient: Awilix.asValue asyncRedisClient
+    wss: Awilix.asValue wss
 
   opts = {}
 
@@ -65,10 +66,6 @@ Worker = ->
 
   # Connect ClusterWS and Express
   server.on 'request', app
-  wss.on 'connection', (socket) ->
-    console.log 'New socket is connected'
-    return
-
 
 class Setup
 
