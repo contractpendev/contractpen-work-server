@@ -46,13 +46,22 @@ Worker = ->
   setupServer.setup()
 
   app = express()
-  app.use express.static('public')
+
+  #app.use express.static('public')
+
+  port = process.env.PORT or 8080
+  router = express.Router()
+  router.get '/', (req, res) ->
+    res.json message: 'hooray! welcome to our api!'
+    return
+  app.use '/api', router
 
   # Connect ClusterWS and Express
   server.on 'request', app
   wss.on 'connection', (socket) ->
     console.log 'New socket is connected'
     return
+
 
 class Setup
 
