@@ -2,10 +2,13 @@
 Comedy = require 'comedy'
 Awilix = require 'awilix'
 Setup = require './Setup'
+GlobalContainer = require './GlobalContainer'
 
 start = ->
-  setupServer = Setup.container.resolve 'SetupServer'
-  setupServer.setup()
+  setup = new Setup()
+  setup.setup()
 
 start()
+
+
 

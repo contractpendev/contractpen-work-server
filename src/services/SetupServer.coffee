@@ -13,7 +13,7 @@ class SetupServer
     @g = opts.graph
 
   setup: () ->
-    console.log 'hi'
+    console.log 'start programming here'
 
   doNothing: (error) -> 0
 
