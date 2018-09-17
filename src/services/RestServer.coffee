@@ -7,7 +7,11 @@ class RestServer
     @g = opts.graph
 
   setup: () ->
-    @expressRouter.get '/', (req, res) ->
+    # Task is submitted and will be worked on by a worker nodejs client
+    # Task is defined in JSON structure
+    # HTTP POST TO http://localhost:3050/api/submitTask with body raw JSON (application/json)
+    @expressRouter.post '/submitTask', (req, res) ->
+      console.log req.body.test
       res.json message: 'zzhooray! welcome to our api!'
       return
     console.log 'setup'

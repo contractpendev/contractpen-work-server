@@ -6,6 +6,7 @@ Graph = require '@dagrejs/graphlib'
 ClusterWS = require 'clusterws'
 express = require 'express'
 GlobalContainer = require './GlobalContainer'
+bodyParser = require 'body-parser'
 
 Worker = ->
   wss = @wss
@@ -26,6 +27,7 @@ Worker = ->
   actorSystem.getLog().setLevel(0) # Prevent output of log at startup
 
   app = express()
+  app.use(bodyParser.json())
   router = express.Router()
 
   # Dependency injection
