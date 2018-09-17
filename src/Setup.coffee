@@ -31,6 +31,7 @@ Worker = ->
     injectionMode: Awilix.InjectionMode.PROXY
 
   GlobalContainer.container.register
+    container: Awilix.asValue GlobalContainer.container
     logger: Awilix.asValue logger
     actorSystem: Awilix.asValue actorSystem
     graphClass: Awilix.asClass graphClass

@@ -11,9 +11,12 @@ class SetupServer
 
   constructor: (opts) ->
     @g = opts.graph
+    @container = opts.container
 
   setup: () ->
-    console.log 'start programming here'
+    restServer = @container.resolve 'RestServer'
+    restServer.setup()
+
 
   doNothing: (error) -> 0
 
