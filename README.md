@@ -35,4 +35,7 @@ Graph library which is not really used in this project but is added
 
 https://github.com/dagrejs/graphlib/wiki
 
+Redis client
+
+https://github.com/NodeRedis/node_redis
 

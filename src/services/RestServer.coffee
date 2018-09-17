@@ -12,10 +12,15 @@ class RestServer
     # Task is defined in JSON structure
     # HTTP POST TO http://localhost:3050/api/submitTask with body raw JSON (application/json)
     @expressRouter.post '/submitTask', (req, res) =>
-      await @asyncRedisClient.set('key', 'value')
-      console.log req.body.test
-      res.json message: 'zzhooray! welcome to our api!'
-      return
+      # Insert task into Redis
+      jobJson = req.body
+      jobString = JSON.stringify(jobJson)
+      await @asyncRedisClient.sadd('JOBS_SET', jobString)
+      #myTest = await @asyncRedisClient.smembers('testset')
+      #console.log(myTest)
+      #console.log req.body.test
+      res.json message: 'ok'
+
     console.log 'setup'
 
 module.exports = RestServer
