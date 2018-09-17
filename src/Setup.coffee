@@ -25,6 +25,9 @@ Worker = ->
   actorSystem = Comedy()
   actorSystem.getLog().setLevel(0) # Prevent output of log at startup
 
+  app = express()
+  router = express.Router()
+
   # Dependency injection
   # @todo How to get the container to be globally available
   GlobalContainer.container = Awilix.createContainer
@@ -36,6 +39,7 @@ Worker = ->
     actorSystem: Awilix.asValue actorSystem
     graphClass: Awilix.asClass graphClass
     graph: Awilix.asValue graphInstance
+    expressRouter: Awilix.asValue router
 
   opts = {}
 
@@ -46,15 +50,8 @@ Worker = ->
   setupServer = GlobalContainer.container.resolve 'SetupServer'
   setupServer.setup()
 
-  app = express()
-
   #app.use express.static('public')
 
-  port = process.env.PORT or 8080
-  router = express.Router()
-  router.get '/', (req, res) ->
-    res.json message: 'hooray! welcome to our api!'
-    return
   app.use '/api', router
 
   # Connect ClusterWS and Express
