@@ -7,10 +7,15 @@ ClusterWS = require 'clusterws'
 express = require 'express'
 GlobalContainer = require './GlobalContainer'
 bodyParser = require 'body-parser'
+redis = require "redis"
+asyncRedis = require "async-redis"
 
 Worker = ->
   wss = @wss
   server = @server
+
+  redisClient = redis.createClient()
+  asyncRedisClient = asyncRedis.decorate(redisClient)
 
   graphClass = Graph.Graph
   graphInstance = new graphClass()
@@ -42,6 +47,8 @@ Worker = ->
     graphClass: Awilix.asClass graphClass
     graph: Awilix.asValue graphInstance
     expressRouter: Awilix.asValue router
+    redisClient: Awilix.asValue redisClient
+    asyncRedisClient: Awilix.asValue asyncRedisClient
 
   opts = {}
 

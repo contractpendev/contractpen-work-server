@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@dagrejs/graphlib": "^2.1.4",
+    "async-redis": "^1.1.4",
     "awilix": "^3.0.9",
     "body-parser": "^1.18.3",
     "clear-module": "^3.0.0",
@@ -21,6 +22,7 @@
     "express": "^4.16.3",
     "graphql-request": "^1.8.2",
     "html-entities": "^1.2.1",
+    "redis": "^2.8.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5",
     "winston": "^3.0.0"
