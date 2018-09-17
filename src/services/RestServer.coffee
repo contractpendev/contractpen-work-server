@@ -8,13 +8,22 @@ class RestServer
     @asyncRedisClient = opts.asyncRedisClient
     @wss = opts.wss
 
-  setup: () ->
-    @wss.on 'connection', (socket) ->
+  sendAvailableCommandToClient: (socket) =>
+    pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
+    if pending
+      console.log 'send this pending job to client'
+      await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
+      socket.send 'executeJob', pending
+    console.log 'ok'
+
+  setup: () =>
+    @wss.on 'connection', (socket) =>
       console.log 'Socket is connected'
       socket.send('serverConnected', 'The server is connected')
       socket.on 'clientReadyToAcceptCommands', (message) ->
         console.log 'clientReadyToAcceptCommands received from the client means that we can send a command to this client'
         console.log(message)
+        this.sendAvailableCommandToClient socket
 
     # Task is submitted and will be worked on by a worker nodejs client
     # Task is defined in JSON structure
@@ -33,5 +42,6 @@ class RestServer
 
 # Contains all submitted jobs
 RestServer.JOBS_PENDING_SET = 'JOBS_PENDING_SET'
+RestServer.JOBS_AT_CLIENT = 'JOBS_AT_CLIENT'
 
 module.exports = RestServer
