@@ -24,6 +24,8 @@ class RestServer
         @identitySocketMap[clientIdentity] = {
           addedTime: (new Date()).getTime()
           socket: socket
+          workerState: RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
+          lastStateChangeTime: (new Date()).getTime()
         } # Associated the id with the socket
         this.sendAvailableCommandToClient socket
 
@@ -31,6 +33,8 @@ class RestServer
         console.log 'client finished a job'
         @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
         console.log 'do somnething with the result   ----- finished job on client'
+        @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
+        @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
         return
 
     # Task is submitted and will be worked on by a worker nodejs client
@@ -53,5 +57,9 @@ class RestServer
 RestServer.JOBS_PENDING_SET = 'JOBS_PENDING_SET'
 RestServer.JOBS_AT_CLIENT = 'JOBS_AT_CLIENT'
 RestServer.JOBS_FINISHED = 'JOBS_FINISHED'
+
+# Worker states
+RestServer.WORKER_READY_TO_ACCEPT_COMMANDS = 'WORKER_READY_TO_ACCEPT_COMMANDS'
+RestServer.WORKER_EXECUTING_COMMAND = 'WORKER_EXECUTING_COMMAND'
 
 module.exports = RestServer
