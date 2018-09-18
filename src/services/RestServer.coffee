@@ -28,6 +28,9 @@ class RestServer
     if availableWorkers.length == 0
       return
     clientToSendTo = availableWorkers[Math.floor(Math.random() * availableWorkers.length)]
+    # Update worker state
+    @identitySocketMap[clientToSendTo.client.clientIdentity].workerState = RestServer.WORKER_EXECUTING_COMMAND
+    @identitySocketMap[clientToSendTo.client.clientIdentity].lastStateChangeTime = (new Date()).getTime()
     # Send job to the worker
     clientToSendTo.client.socket.send 'executeJob', jobString
     # Update job state in Redis
@@ -40,6 +43,7 @@ class RestServer
       socket.on 'clientReadyToAcceptCommands', (clientIdentity) =>
         # @todo Clean up added records which were added more than n hours ago as this will grow too much
         @identitySocketMap[clientIdentity] = {
+          clientIdentity: clientIdentity
           addedTime: (new Date()).getTime()
           socket: socket
           workerState: RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
