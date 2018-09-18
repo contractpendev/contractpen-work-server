@@ -12,9 +12,7 @@ class RestServer
     pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
     if pending
       await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
-      console.log 'send this pending job to client'
       socket.send 'executeJob', pending
-    console.log 'ok'
 
   setup: () =>
     @wss.on 'connection', (socket) =>
@@ -24,14 +22,17 @@ class RestServer
         console.log 'clientReadyToAcceptCommands received from the client means that we can send a command to this client'
         console.log(message)
         this.sendAvailableCommandToClient socket
+      socket.on 'finishedJob', (message) =>
+        console.log 'client finished a job'
 
     # Task is submitted and will be worked on by a worker nodejs client
     # Task is defined in JSON structure
     # HTTP POST TO http://localhost:3050/api/submitTask with body raw JSON
     @expressRouter.post '/submitTask', (req, res) =>
-# Insert task into Redis
+      # Insert task into Redis
       jobJson = req.body
-      console.log jobJson
+      #now = new Date()
+      #jobJson.dateTimeCreated = now.getTime()
       jobString = JSON.stringify(jobJson)
       console.log 'adding job string to'
       console.log jobString
