@@ -21,11 +21,10 @@ class RestServer
       socket.on 'clientReadyToAcceptCommands', (message) =>
         this.sendAvailableCommandToClient socket
       socket.on 'finishedJob', (message) =>
-        # @todo Move the job to the finished set
-        # @todo Record the jobs result
-        # @todo Send the jobs result to a subscribed client socket
         console.log 'client finished a job'
-        console.log message
+        @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
+        console.log 'do somnething with the result   ----- finished job on client'
+        return
 
     # Task is submitted and will be worked on by a worker nodejs client
     # Task is defined in JSON structure
@@ -46,5 +45,6 @@ class RestServer
 # Contains all submitted jobs
 RestServer.JOBS_PENDING_SET = 'JOBS_PENDING_SET'
 RestServer.JOBS_AT_CLIENT = 'JOBS_AT_CLIENT'
+RestServer.JOBS_FINISHED = 'JOBS_FINISHED'
 
 module.exports = RestServer
