@@ -9,11 +9,29 @@ class RestServer
     @wss = opts.wss
     @identitySocketMap = {}
 
+  # Randomly pick a command to send to a client and update redis state
   sendAvailableCommandToClient: (socket) =>
     pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
     if pending
       await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
       socket.send 'executeJob', pending
+
+  # Send the job to any random worker
+  sendJobToAnyAvailableWorker: (jobString) =>
+    availableWorkers = []
+    # Find any random available worker
+    for id, client of @identitySocketMap
+      if client.workerState == RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
+        availableWorkers.push
+          id: id
+          client: client
+    if availableWorkers.length == 0
+      return
+    clientToSendTo = availableWorkers[Math.floor(Math.random() * availableWorkers.length)]
+    # Send job to the worker
+    clientToSendTo.client.socket.send 'executeJob', jobString
+    # Update job state in Redis
+    await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, jobString)
 
   setup: () =>
     @wss.on 'connection', (socket) =>
@@ -49,6 +67,8 @@ class RestServer
       console.log 'adding job string to'
       console.log jobString
       await @asyncRedisClient.sadd(RestServer.JOBS_PENDING_SET, jobString)
+      if (jobJson.targetWorkerId == null)
+        await @sendJobToAnyAvailableWorker(jobString)
       res.json message: 'ok'
 
     console.log 'setup'
