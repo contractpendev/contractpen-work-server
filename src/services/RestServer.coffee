@@ -7,6 +7,7 @@ class RestServer
     @g = opts.graph
     @asyncRedisClient = opts.asyncRedisClient
     @wss = opts.wss
+    @identitySocketMap = {}
 
   sendAvailableCommandToClient: (socket) =>
     pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
@@ -16,10 +17,16 @@ class RestServer
 
   setup: () =>
     @wss.on 'connection', (socket) =>
-      #console.log 'Socket is connected'
       socket.send('serverConnected', 'The server is connected')
-      socket.on 'clientReadyToAcceptCommands', (message) =>
+
+      socket.on 'clientReadyToAcceptCommands', (clientIdentity) =>
+        # @todo Clean up added records which were added more than n hours ago as this will grow too much
+        @identitySocketMap[clientIdentity] = {
+          addedTime: (new Date()).getTime()
+          socket: socket
+        } # Associated the id with the socket
         this.sendAvailableCommandToClient socket
+
       socket.on 'finishedJob', (message) =>
         console.log 'client finished a job'
         @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
