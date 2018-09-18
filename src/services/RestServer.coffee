@@ -21,7 +21,9 @@ class RestServer
       socket.on 'clientReadyToAcceptCommands', (message) =>
         this.sendAvailableCommandToClient socket
       socket.on 'finishedJob', (message) =>
-        # @todo
+        # @todo Move the job to the finished set
+        # @todo Record the jobs result
+        # @todo Send the jobs result to a subscribed client socket
         console.log 'client finished a job'
         console.log message
 
