@@ -36,6 +36,10 @@ class RestServer
     # Update job state in Redis
     await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, jobString)
 
+  # @todo Check the health of all state, eg, stale states reset
+  healthCheck: () =>
+    0
+
   setup: () =>
     @wss.on 'connection', (socket) =>
       socket.send('serverConnected', 'The server is connected')
@@ -54,7 +58,9 @@ class RestServer
       socket.on 'finishedJob', (message) =>
         console.log 'client finished a job'
         @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
-        @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(message.result))
+        result = message.result
+        result.savedDateTime = (new Date()).getTime()
+        @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(result))
         console.log 'do somnething with the result   ----- finished job on client'
         @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
         @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
