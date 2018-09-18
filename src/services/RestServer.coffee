@@ -16,14 +16,14 @@ class RestServer
 
   setup: () =>
     @wss.on 'connection', (socket) =>
-      console.log 'Socket is connected'
+      #console.log 'Socket is connected'
       socket.send('serverConnected', 'The server is connected')
       socket.on 'clientReadyToAcceptCommands', (message) =>
-        console.log 'clientReadyToAcceptCommands received from the client means that we can send a command to this client'
-        console.log(message)
         this.sendAvailableCommandToClient socket
       socket.on 'finishedJob', (message) =>
+        # @todo
         console.log 'client finished a job'
+        console.log message
 
     # Task is submitted and will be worked on by a worker nodejs client
     # Task is defined in JSON structure
