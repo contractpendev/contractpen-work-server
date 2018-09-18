@@ -54,6 +54,7 @@ class RestServer
       socket.on 'finishedJob', (message) =>
         console.log 'client finished a job'
         @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
+        @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(message.result))
         console.log 'do somnething with the result   ----- finished job on client'
         @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
         @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
@@ -81,6 +82,8 @@ class RestServer
 RestServer.JOBS_PENDING_SET = 'JOBS_PENDING_SET'
 RestServer.JOBS_AT_CLIENT = 'JOBS_AT_CLIENT'
 RestServer.JOBS_FINISHED = 'JOBS_FINISHED'
+
+RestServer.JOBS_RESULT = 'JOBS_RESULT'
 
 # Worker states
 RestServer.WORKER_READY_TO_ACCEPT_COMMANDS = 'WORKER_READY_TO_ACCEPT_COMMANDS'
