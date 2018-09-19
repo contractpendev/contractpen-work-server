@@ -1,6 +1,9 @@
 
 class RestServer
 
+  # @todo Tasks to do
+  # @todo ?
+
   constructor: (opts) ->
     @container = opts.container
     @expressRouter = opts.expressRouter
@@ -10,11 +13,16 @@ class RestServer
     @identitySocketMap = {}
 
   # Randomly pick a command to send to a client and update redis state
-  sendAvailableCommandToClient: (socket) =>
+  sendAvailableCommandToClient: (socket, clientIdentity) =>
     pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
     if pending
+      console.log 'sending an available command to client'
+      # Update worker state
+      @identitySocketMap[clientIdentity].workerState = RestServer.WORKER_EXECUTING_COMMAND
+      @identitySocketMap[clientIdentity].lastStateChangeTime = (new Date()).getTime()
       await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
       socket.send 'executeJob', pending
+      console.log 'sent'
 
   # Send the job to any random worker
   sendJobToAnyAvailableWorker: (jobString) =>
@@ -25,6 +33,7 @@ class RestServer
         availableWorkers.push
           id: id
           client: client
+    console.log 'there are n available workers ' + availableWorkers.length
     if availableWorkers.length == 0
       return
     clientToSendTo = availableWorkers[Math.floor(Math.random() * availableWorkers.length)]
@@ -43,6 +52,20 @@ class RestServer
   setup: () =>
     @wss.on 'connection', (socket) =>
       socket.send('serverConnected', 'The server is connected')
+      #console.log socket.id
+
+      socket.on 'disconnect', (code, reason) =>
+        idToRemove = null
+        for id, client of @identitySocketMap
+          idToRemove = id if client.socket.id == socket.id
+        delete @identitySocketMap[idToRemove]
+        # your code to execute on disconnect event
+        return
+
+      # error event is called when something went wrong with socket
+      #socket.on 'error', (err) ->
+      #  # your code to execute on error event
+      #  return
 
       socket.on 'clientReadyToAcceptCommands', (clientIdentity) =>
         # @todo Clean up added records which were added more than n hours ago as this will grow too much
@@ -53,7 +76,7 @@ class RestServer
           workerState: RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
           lastStateChangeTime: (new Date()).getTime()
         } # Associated the id with the socket
-        this.sendAvailableCommandToClient socket
+        this.sendAvailableCommandToClient socket, clientIdentity
 
       socket.on 'finishedJob', (message) =>
         console.log 'client finished a job'
@@ -64,6 +87,8 @@ class RestServer
         console.log 'do somnething with the result   ----- finished job on client'
         @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
         @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
+        # See if there are any available jobs for this worker to do
+        @sendAvailableCommandToClient socket, message.workerId
         return
 
     # Task is submitted and will be worked on by a worker nodejs client
