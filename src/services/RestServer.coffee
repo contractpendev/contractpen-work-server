@@ -89,6 +89,8 @@ class RestServer
         console.log '...'
         @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
         @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(result))
+        if message.job.transactionId
+          @asyncRedisClient.publish(message.job.transactionId, JSON.stringify(result))
         console.log 'do somnething with the result   ----- finished job on client'
         @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
         @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
