@@ -2,7 +2,7 @@
 class RestServer
 
   # @todo Tasks to do
-  # @todo ?
+  # @todo 1. Each socket has an id identifier, so therefore we do not need a guid on the client side, just use the socket id
 
   constructor: (opts) ->
     @container = opts.container
@@ -14,15 +14,17 @@ class RestServer
 
   # Randomly pick a command to send to a client and update redis state
   sendAvailableCommandToClient: (socket, clientIdentity) =>
-    pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
-    if pending
-      console.log 'sending an available command to client'
-      # Update worker state
-      @identitySocketMap[clientIdentity].workerState = RestServer.WORKER_EXECUTING_COMMAND
-      @identitySocketMap[clientIdentity].lastStateChangeTime = (new Date()).getTime()
-      await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
-      socket.send 'executeJob', pending
-      console.log 'sent'
+    # Precondition: Is the worker available
+    if @identitySocketMap[clientIdentity].workerState == RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
+      pending = await @asyncRedisClient.srandmember(RestServer.JOBS_PENDING_SET)
+      if pending
+        console.log 'sending an available command to client'
+        # Update worker state
+        @identitySocketMap[clientIdentity].workerState = RestServer.WORKER_EXECUTING_COMMAND
+        @identitySocketMap[clientIdentity].lastStateChangeTime = (new Date()).getTime()
+        await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, pending)
+        socket.send 'executeJob', pending
+        console.log 'sent'
 
   # Send the job to any random worker
   sendJobToAnyAvailableWorker: (jobString) =>
@@ -80,9 +82,9 @@ class RestServer
 
       socket.on 'finishedJob', (message) =>
         console.log 'client finished a job'
-        @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
-        result = message.result
+        result = message
         result.savedDateTime = (new Date()).getTime()
+        @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
         @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(result))
         console.log 'do somnething with the result   ----- finished job on client'
         @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
