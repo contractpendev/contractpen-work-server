@@ -42,10 +42,10 @@ class RestServer
     # Update worker state
     @identitySocketMap[clientToSendTo.client.clientIdentity].workerState = RestServer.WORKER_EXECUTING_COMMAND
     @identitySocketMap[clientToSendTo.client.clientIdentity].lastStateChangeTime = (new Date()).getTime()
-    # Send job to the worker
-    clientToSendTo.client.socket.send 'executeJob', jobString
     # Update job state in Redis
     await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, jobString)
+    # Send job to the worker
+    clientToSendTo.client.socket.send 'executeJob', jobString
 
   # @todo Check the health of all state, eg, stale states reset
   healthCheck: () =>
