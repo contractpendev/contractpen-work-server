@@ -38,12 +38,18 @@ class RestServer
     console.log 'there are n available workers ' + availableWorkers.length
     if availableWorkers.length == 0
       return
+    console.log 'a'  
     clientToSendTo = availableWorkers[Math.floor(Math.random() * availableWorkers.length)]
     # Update worker state
+    console.log 'b'  
     @identitySocketMap[clientToSendTo.client.clientIdentity].workerState = RestServer.WORKER_EXECUTING_COMMAND
+    console.log 'c'  
     @identitySocketMap[clientToSendTo.client.clientIdentity].lastStateChangeTime = (new Date()).getTime()
+    console.log 'd'  
     # Update job state in Redis
     await @asyncRedisClient.smove(RestServer.JOBS_PENDING_SET, RestServer.JOBS_AT_CLIENT, jobString)
+    console.log 'e'  
+    console.log clientToSendTo
     # Send job to the worker
     clientToSendTo.client.socket.send 'executeJob', jobString
 
