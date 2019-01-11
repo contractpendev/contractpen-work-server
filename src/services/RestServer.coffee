@@ -70,6 +70,7 @@ class RestServer
       #  return
 
       socket.on 'clientReadyToAcceptCommands', (clientIdentity) =>
+        console.log 'clientReadyToAcceptCommands received for ' + clientIdentity
         # @todo Clean up added records which were added more than n hours ago as this will grow too much
         @identitySocketMap[clientIdentity] = {
           clientIdentity: clientIdentity
