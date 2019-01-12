@@ -57,19 +57,19 @@ class RestServer
   healthCheck: () =>
     0
 
-  workerSwitch: (message, opt1, opt2) =>  
+  workerSwitch: (message, finishedJob, workerAvailable) =>  
     console.log 'client finished a job'
     result = message
     result.savedDateTime = (new Date()).getTime()
     console.log message.job
     console.log JSON.stringify(message.job)
     console.log '...'
-    if (opt1)
+    if (finishedJob)
       @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
       @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(result))
       if message.job.transactionId
         @asyncRedisClient.publish(message.job.transactionId, JSON.stringify(result))
-    if (opt2)    
+    if (workerAvailable)    
       console.log 'do somnething with the result   ----- finished job on client'
       @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
       @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
