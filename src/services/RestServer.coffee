@@ -57,6 +57,26 @@ class RestServer
   healthCheck: () =>
     0
 
+  workerSwitch: (message, opt1, opt2) =>  
+    console.log 'client finished a job'
+    result = message
+    result.savedDateTime = (new Date()).getTime()
+    console.log message.job
+    console.log JSON.stringify(message.job)
+    console.log '...'
+    if (opt1)
+      @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
+      @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(result))
+      if message.job.transactionId
+        @asyncRedisClient.publish(message.job.transactionId, JSON.stringify(result))
+    if (opt2)    
+      console.log 'do somnething with the result   ----- finished job on client'
+      @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
+      @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
+      # See if there are any available jobs for this worker to do
+      @sendAvailableCommandToClient socket, message.workerId
+    return
+    
   setup: () =>
     @wss.on 'connection', (socket) =>
       socket.send('serverConnected', 'The server is connected')
@@ -87,23 +107,14 @@ class RestServer
         } # Associated the id with the socket
         this.sendAvailableCommandToClient socket, clientIdentity
 
-      socket.on 'finishedJob', (message) =>
-        console.log 'client finished a job'
-        result = message
-        result.savedDateTime = (new Date()).getTime()
-        console.log message.job
-        console.log JSON.stringify(message.job)
-        console.log '...'
-        @asyncRedisClient.smove(RestServer.JOBS_AT_CLIENT, RestServer.JOBS_FINISHED, JSON.stringify(message.job))
-        @asyncRedisClient.sadd(RestServer.JOBS_RESULT, JSON.stringify(result))
-        if message.job.transactionId
-          @asyncRedisClient.publish(message.job.transactionId, JSON.stringify(result))
-        console.log 'do somnething with the result   ----- finished job on client'
-        @identitySocketMap[message.workerId].workerState = RestServer.WORKER_READY_TO_ACCEPT_COMMANDS
-        @identitySocketMap[message.workerId].lastStateChangeTime = (new Date()).getTime()
-        # See if there are any available jobs for this worker to do
-        @sendAvailableCommandToClient socket, message.workerId
-        return
+      socket.on 'workerAvailable', (message) =>
+        @workerSwitch(message, false, true)
+
+      socket.on 'workerFinishedJob', (message) =>
+        @workerSwitch(message, true, false)
+
+      socket.on 'workerAvailableAndFinishedJob', (message) =>
+        @workerSwitch(message, true, true)
 
     # Task is submitted and will be worked on by a worker nodejs client
     # Task is defined in JSON structure
