@@ -57,7 +57,7 @@ class RestServer
   healthCheck: () =>
     0
 
-  workerSwitch: (message, finishedJob, workerAvailable) =>  
+  workerSwitch: (message, finishedJob, workerAvailable, socket) =>  
     console.log 'client finished a job'
     result = message
     result.savedDateTime = (new Date()).getTime()
@@ -108,13 +108,13 @@ class RestServer
         this.sendAvailableCommandToClient socket, clientIdentity
 
       socket.on 'workerAvailable', (message) =>
-        @workerSwitch(message, false, true)
+        @workerSwitch(message, false, true, socket)
 
       socket.on 'workerFinishedJob', (message) =>
-        @workerSwitch(message, true, false)
+        @workerSwitch(message, true, false, socket)
 
       socket.on 'workerAvailableAndFinishedJob', (message) =>
-        @workerSwitch(message, true, true)
+        @workerSwitch(message, true, true, socket)
 
     # Task is submitted and will be worked on by a worker nodejs client
     # Task is defined in JSON structure
